@@ -229,3 +229,169 @@ app.post('/api', (req, res) => {
 "scripts": {
   "start": "node / nodemon app.js"
 }
+
+
+////////////////////////////////////////////////////////////////////        EXPRESS ex2
+// GET request that receives an array of objects with info about books
+// POST request that adds a new book object to the array of books and sends a confimration message
+// PATCH request that updates the book that matches the title of the book send in the body
+// object and sends back the updates book object
+
+const express = require('express');
+const app = express();
+const port = 8080;
+app.use(express.json()); // basically, do this every time; no idea why it's not in the boilerplate
+
+const books = [
+  {
+    id: 1,
+    title: 'Dune',
+    author: 'Frank Herbert',
+    rating: 5
+  },
+  {
+    id: 2,
+    title: 'Foundation',
+    author: 'Isaac Asimov',
+    rating: 5
+  }
+];
+
+app.get('/api/books/', (req, res) => {
+  res.status(200).send(books);
+})
+
+app.post('/api/books/', (req, res) => {
+  const { title, author, } = req.body;  // replaces req.body.author, req.body.title, and req.body.id in newBook
+  const newBook = {                     // this has no practical value; do not try to implement
+    id: books.length +1,
+    title, // replaced
+    author, // replaced
+    rating // replaced
+  }
+  books.push(newBook);
+  res.status(201).send(`${title}'Added to library.`);
+})
+
+app.patch('/api/books/', (req, res) => {
+  let foundFlag = false;
+  let foundBook = {};
+  books.forEach(book => {
+    if (book.title === req.body.title) {
+      foundFlag = true;
+      book.rating = req.body.rating
+      foundBook = book;
+    }
+  })
+  if (foundFlag) {
+    res.status(200).send(foundBook)
+  } else {
+    res.status(404).send('Book not found in library.')
+  }
+})
+
+app.listen(port, () => console.log(`Express server listening on port ${port}.`))
+
+
+////////////////////////////////////////////////////////////////////        EXPRESS PARAMS        /////////////////////////////
+//
+// http:...some-website.com/path/parameter?someQueryParamater=myVariable
+//                   |  path param  |  query param (everything after ?)
+
+// if the variable is required for the function, use path param   *** path params are part of URL
+// if it is not, use the query param                              *** query params only extend URL
+
+// practically: if a function requires changing the URL to the left of the '?' use path
+// otherwise, use query for anything to the right of the '?'
+
+// by using a colon ':' as a prefix in the route, path params can be mapped and paths made available from req.params
+
+// a query param starts with the first '?' and ends with the first '#' (if any)
+//
+// http: //site.com/page.html?param1=[@field:fieldname1]&param2=[@field:fieldname2]
+// |          URL           | |    | |   param value   | |    | |   param value
+//                          param name                 param name
+
+////////////////////////////////////////////////////////////////////        EXPRESS ex1
+// npm start after boilerplate
+
+const express = require('express');
+const app = express();
+const port = 8080;
+app.use(express.json()); // basically, do this every time; no idea why it's not in the boilerplate
+
+let myPlantData = [
+  { id: 0, name: 'Lilac', fullSun: true },
+  { id: 1, name: 'Sunflower', fullSun: true },
+  { id: 2, name: 'Palm', fullSun: true },
+  { id: 3, name: 'Lily', fullSun: false }
+]
+
+app.listen(port, () => console.log(`Express server listening on port ${port}.`)) // boilerplate that goes at the bottom
+
+app.get('/', (req, res) => {
+
+})
+
+// get all plants
+app.get('/plants', (req, res) => {
+  res.status(200).send(myPlantData)
+})
+
+// get plant based on id being placed in the URL
+// in essense, functions when http: .../plants/*user input*
+app.get('/plants/:plantId', (req, res) => {
+  var { plantId } = req.params;                 // still unnecessary, just pretty; don't implement
+  let myPlant = myPlantData.find(element => {
+    return element.id === parseInt(plantId);    // parseInt neededelse will search for a string
+  })
+  res.status(200).send(myPlant);
+})
+
+// get plants based on query in URL
+// in essense, http:.../plants?fullSun=true
+app.get('/plants', (req, res) => {
+  let { fullSun } = request.query;
+
+  if(fullSun !== undefined) {
+    fullSun = fullSun === 'true';   // parses boolean in array into the if logic for use in filter
+    let myPlants = myPlantData.filter(element => element.fullSun === fullSun);
+    res.status(200).send(myPlants);
+  } else {
+    res.status(200).send(myPlantData);
+  }
+})
+
+// post a new plant based on URL (data input in postman app)
+// using postman (or something; see videos in express parameters content; might be irrelevant)
+app.post('/plants', (req, res) => {
+  let myPlant = request.body;
+
+  let newPlant = {
+    "id": myPlantData.length,
+    ...myPlant
+  }
+  myPlantData.push(newPlant);
+  res.status(201).send(newPlant);
+})
+
+
+// put endpoint to update a plant in the collection
+// data coming from postman input
+app.put('/plants/:plantId', (req, res) => {   // uses id as path param
+  var { plantId } = req.params;   // this is still confusing and irrelevant, but with more complex data can have benefits
+
+  let myPlantIndex = myPlantData.findIndex(element => {   // determines index of input plant in current array
+    return element.id === parseInt(plantId);    // assigns determined index to myPlantIndex
+  })
+
+  if(myPlantIndex < 0) {    // above will return -1 if plant not found
+    res.status(404).send(`Plant ID: ${plantId} does not exist in the database.`);
+  } else {
+    let updatedPlant = req.body;    // assigns value of request body to a variable
+    myPlantData[myPlantIndex].name = updatedPlant.name;   // updates current array with request body (updatedPlant)
+    myPlantData[myPlantIndex].fullSun = updatedPlant.fullSun;   // uses index determined above
+    res.status(204).send(myPlantData[myPlantIndex]);
+  }
+})
+
